@@ -1,0 +1,21 @@
+<svg width="780" height="210" viewBox="0 0 780 210" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loupe: Android Device Control Hub">
+  <rect x="1" y="1" width="778" height="208" rx="24" fill="#0a0b0d" stroke="#23272d" stroke-width="2"/>
+  <!-- magnifier inspecting an Android phone -->
+  <g transform="translate(70,42)">
+    <circle cx="62" cy="62" r="50" fill="none" stroke="#b6f24a" stroke-width="11"/>
+    <line x1="100" y1="100" x2="132" y2="132" stroke="#b6f24a" stroke-width="15" stroke-linecap="round"/>
+    <rect x="45" y="34" width="34" height="56" rx="7" fill="none" stroke="#b6f24a" stroke-width="4"/>
+    <!-- Android head, centered on the phone screen -->
+    <g fill="#b6f24a">
+      <line x1="54" y1="61" x2="52" y2="56" stroke="#b6f24a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="70" y1="61" x2="72" y2="56" stroke="#b6f24a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M49 72 v-1 a13 13 0 0 1 26 0 v1 z"/>
+      <circle cx="57.5" cy="67" r="1.8" fill="#0a0b0d"/>
+      <circle cx="66.5" cy="67" r="1.8" fill="#0a0b0d"/>
+    </g>
+  </g>
+  <!-- wordmark -->
+  <text x="248" y="108" font-family="'Space Grotesk', system-ui, -apple-system, Segoe UI, sans-serif" font-size="82" font-weight="700" fill="#e8ebef">Loupe</text>
+  <rect x="250" y="126" width="186" height="6" rx="3" fill="#b6f24a"/>
+  <text x="252" y="164" font-family="'Space Grotesk', system-ui, -apple-system, Segoe UI, sans-serif" font-size="25" font-weight="500" letter-spacing="2.5" fill="#98a0aa">Android Device Control Hub</text>
+</svg>

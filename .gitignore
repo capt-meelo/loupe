@@ -1,0 +1,19 @@
+# Dependencies & build output
+node_modules/
+dist/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Local tooling & secrets
+.claude/
+.env
+.env.*
+*.log
+npm-debug.log*
+
+# Internal: used to take screenshots for the README
+scripts/capture-screenshots.mjs
