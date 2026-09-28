@@ -29,7 +29,7 @@ const TABS = [
 export function Wireless() {
   const {
     s, set, refreshWireless, pairWithCode, connectWifiAddr,
-    useWirelessDevice, startQr, cancelQr, killAdbServer
+    useWirelessDevice, startQr, cancelQr
   } = useLoupe();
 
   useEffect(() => { refreshWireless(); /* eslint-disable-next-line */ }, []);
@@ -129,7 +129,6 @@ export function Wireless() {
         Wireless uses the host <span className="mono">adb</span> via Loupe's bridge. That server
         also claims USB devices, so USB (WebUSB) and Wi-Fi can't be used at once.
       </div>
-      <Mini label="Stop adb server (free USB)" onClick={killAdbServer} />
     </div>
   );
 }

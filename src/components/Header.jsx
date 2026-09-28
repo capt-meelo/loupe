@@ -24,7 +24,7 @@ const Logo = () => (
 );
 
 function DevicePicker() {
-  const { s, set, connectUsb, disconnectDevice } = useLoupe();
+  const { s, set, connectUsb, disconnectDevice, killAdbServer } = useLoupe();
   const close = () => set({ devOpen: false });
   const ref = useDismiss(s.devOpen, close);
   const dev = s.device;
@@ -49,7 +49,7 @@ function DevicePicker() {
       </button>
 
       {s.devOpen && (
-        <div className="menu" style={{ width: 330, maxHeight: 560, overflow: 'auto' }}>
+        <div className="menu" style={{ width: s.wifiOpen ? 330 : 260, maxHeight: 560, overflow: 'auto' }}>
           <div className="label" style={{ padding: '6px 8px' }}>Connected</div>
 
           {dev ? (
@@ -80,18 +80,27 @@ function DevicePicker() {
             style={{ color: 'var(--accent)', fontWeight: 500, justifyContent: 'flex-start' }}
             onClick={connectUsb}
           >
-            {s.usbSupported ? '+ Connect a device over USB' : 'USB needs Chrome or Edge'}
+            {s.usbSupported ? '+ Connect over USB' : 'USB needs Chrome or Edge'}
           </button>
           <div className="menu-sep" />
-          {s.wifiOpen ? <Wireless /> : (
-            <button
-              className="menu-item"
-              style={{ color: 'var(--accent)', fontWeight: 500, justifyContent: 'flex-start' }}
-              onClick={() => set({ wifiOpen: true })}
-            >
-              + Connect over Wi-Fi (pair code or QR)
-            </button>
-          )}
+          <button
+            className="menu-item"
+            style={{ color: 'var(--accent)', fontWeight: 500, justifyContent: 'flex-start' }}
+            onClick={() => set({ wifiOpen: !s.wifiOpen })}
+          >
+            + Connect over Wi-Fi
+          </button>
+          {s.wifiOpen && <Wireless />}
+
+          <div className="menu-sep" />
+          <button
+            className="menu-item"
+            style={{ color: 'var(--warn)', fontWeight: 500, justifyContent: 'flex-start' }}
+            onClick={killAdbServer}
+            title="Stops the host adb server so WebUSB can claim the USB device"
+          >
+            Stop adb server (free USB)
+          </button>
         </div>
       )}
     </div>
