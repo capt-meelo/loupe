@@ -9,7 +9,7 @@ wire protocol straight from the page, so a live screen mirror, a real shell, a f
 
 ## Features
 
-- **Screen mirror and control.** Live H.264 mirror over [scrcpy](https://github.com/Genymobile/scrcpy), decoded in the browser with WebCodecs. Touch, drag, swipe, scroll, the hardware keys, notification shade, rotate, wake. Take a screenshot or record the screen to your computer with no time limit.
+- **Screen mirror and control.** Live H.264 mirror over [scrcpy](https://github.com/Genymobile/scrcpy), decoded in the browser with WebCodecs. Touch, drag, swipe, scroll, the hardware keys, notification shade, rotate, wake. Take a screenshot (saved to your computer and copied to the clipboard) or record the screen with no time limit.
 ![Loupe workspace with the screen mirror and live logcat](docs/screenshots/workspace.png)
 
 - **Logcat.** Live stream with per level filters, text search, and a per app filter that narrows to one app's processes. Pause and export at any time.

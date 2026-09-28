@@ -1650,17 +1650,21 @@ export function LoupeProvider({ children }) {
         }
       },
 
-      /** Screenshot is copied straight to the clipboard so it's paste-ready. */
+      /** Screenshot saves to disk AND lands on the clipboard, paste-ready. */
       screenshot: async () => {
         if (!webadb.isConnected()) { toast('No device connected'); return; }
-        const toClipboard = (blob) =>
-          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const name = `loupe-screenshot-${stamp}.png`;
+        const save = async (blob) => {
+          download(blob, name);
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        };
         try {
           // Mirroring? Use the already-decoded frame — instant, no round trip.
           const frame = await mirror.snapshot();
           if (frame) {
-            await toClipboard(frame);
-            toast('Screenshot copied to clipboard');
+            await save(frame);
+            toast('Screenshot saved and copied to clipboard');
             return;
           }
           // Otherwise capture on device, pull it back, then clean up after
@@ -1670,8 +1674,8 @@ export function LoupeProvider({ children }) {
           try {
             const { bytes } = await webadb.readAny(remote, 64 * 1024 * 1024);
             if (!bytes.length) throw new Error('screencap produced no image');
-            await toClipboard(new Blob([bytes], { type: 'image/png' }));
-            toast('Screenshot copied to clipboard');
+            await save(new Blob([bytes], { type: 'image/png' }));
+            toast('Screenshot saved and copied to clipboard');
           } finally {
             await webadb.sh(`rm -f ${remote}`).catch(() => {});
           }
