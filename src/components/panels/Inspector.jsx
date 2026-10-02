@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLoupe } from '../../store.jsx';
-import { EmptyState } from '../ui.jsx';
+import { EmptyState, Split } from '../ui.jsx';
 
 /** Real view hierarchy via `uiautomator dump`. */
 export function Inspector() {
@@ -37,8 +37,8 @@ export function Inspector() {
       {s.nodes.length === 0 ? (
         <EmptyState>No hierarchy yet: press <span style={{ color: 'var(--ink2)' }}>Dump hierarchy</span>.</EmptyState>
       ) : (
-        <div style={{ flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateRows: 'minmax(0,1fr)', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)' }}>
-          <div className="scroll mono" style={{ borderRight: '1px solid var(--line)', padding: '6px 0', fontSize: 11 }}>
+        <Split id="inspector">
+          <div className="scroll mono" style={{ padding: '6px 0', fontSize: 11 }}>
             {s.nodes.map((n) => (
               <button key={n.id} onClick={() => set({ insSel: n.id })} style={{
                 display: 'flex', gap: 6, width: '100%', textAlign: 'left', padding: '3px 11px',
@@ -60,7 +60,7 @@ export function Inspector() {
               </div>
             ))}
           </div>
-        </div>
+        </Split>
       )}
     </>
   );

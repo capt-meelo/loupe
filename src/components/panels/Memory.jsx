@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLoupe } from '../../store.jsx';
-import { Search, Mini, EmptyState } from '../ui.jsx';
+import { Search, Mini, EmptyState, Split } from '../ui.jsx';
 
 /** Memory snapshots and heap dumps for a chosen process. */
 export function Memory() {
@@ -59,8 +59,8 @@ export function Memory() {
         </div>
       )}
 
-      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateRows: 'minmax(0,1fr)', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.35fr)' }}>
-        <div className="scroll mono" style={{ borderRight: '1px solid var(--line)', fontSize: 11.5 }}>
+      <Split id="memory" initial={0.43}>
+        <div className="scroll mono" style={{ fontSize: 11.5 }}>
           {s.procsBusy && <div style={{ color: 'var(--ink3)', padding: '10px 12px' }}>Reading ps…</div>}
           {rows.map((p) => (
             <div key={p.pid} className={'file-row' + (s.memPid === p.pid ? ' on' : '')}
@@ -104,7 +104,7 @@ export function Memory() {
             </div>
           )}
         </div>
-      </div>
+      </Split>
     </>
   );
 }

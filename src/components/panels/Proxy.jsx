@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useLoupe } from '../../store.jsx';
-import { EmptyState, Mini } from '../ui.jsx';
+import { EmptyState, Mini, Split } from '../ui.jsx';
 
 const head = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
@@ -27,8 +27,8 @@ export function Proxy() {
   if (!s.connected) return <EmptyState>Connect a device to route its traffic through a proxy.</EmptyState>;
 
   return (
-    <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex' }}>
-      <div className="scroll" style={{ flex: '1 1 0', minWidth: 0, padding: 12, display: 'flex', flexDirection: 'column', gap: 16, borderRight: '1px solid var(--line)' }}>
+    <Split id="proxy">
+      <div className="scroll" style={{ minWidth: 0, padding: 12, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <section>
         <div style={head}>
           <span>Device proxy</span>
@@ -91,7 +91,7 @@ export function Proxy() {
       </section>
       </div>
 
-      <div style={{ flex: '1 1 0', minWidth: 0, padding: 12, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minWidth: 0, padding: 12, display: 'flex', flexDirection: 'column' }}>
         <div style={head}><span>Log</span></div>
         <div className="scroll mono" style={{ flex: '1 1 auto', minHeight: 0, fontSize: 11, lineHeight: 1.7, color: 'var(--ink2)' }}>
           {s.proxyLog.length === 0
@@ -99,6 +99,6 @@ export function Proxy() {
             : s.proxyLog.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       </div>
-    </div>
+    </Split>
   );
 }

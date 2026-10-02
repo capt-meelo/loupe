@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useLoupe } from '../../store.jsx';
-import { Chip, Search, Mini, EmptyState, friendlyName } from '../ui.jsx';
+import { Chip, Search, Mini, EmptyState, friendlyName, Split } from '../ui.jsx';
 
 const FILTERS = [
   { id: 'user', label: 'user' }, { id: 'system', label: 'system' }, { id: 'all', label: 'all' }
@@ -119,8 +119,8 @@ export function Apps() {
         <button className="btn-quiet" onClick={() => { set({ apps: [] }); loadApps(s.appFilter); }}>Reload</button>
       </div>
 
-      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateRows: 'minmax(0,1fr)', gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,1fr)' }}>
-        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--line)' }}>
+      <Split id="apps" initial={0.52}>
+        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <div className="scroll" style={{ flex: '1 1 auto' }}>
             {s.appsBusy && <div className="mono" style={{ color: 'var(--ink3)', padding: '10px 12px' }}>Listing packages…</div>}
             {rows.map((pkg) => {
@@ -162,7 +162,7 @@ export function Apps() {
         <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <AppInfo />
         </div>
-      </div>
+      </Split>
     </>
   );
 }

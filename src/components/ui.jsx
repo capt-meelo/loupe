@@ -150,3 +150,35 @@ export function useDismiss(open, close) {
   }, [open, close]);
   return ref;
 }
+
+// Last dragged ratio per split, so a pane keeps its width across tab switches.
+// ponytail: in-memory only; persist to localStorage if reloads should remember it.
+const splitRatios = {};
+
+/** Two panes side by side with a draggable divider. Children: [left, right]. */
+export function Split({ id, initial = 0.5, min = 0.2, children }) {
+  const host = useRef(null);
+  const [r, setR] = useState(splitRatios[id] ?? initial);
+  const [dragging, setDragging] = useState(false);
+  const move = (e) => {
+    if (!dragging) return;
+    const b = host.current.getBoundingClientRect();
+    const v = Math.min(1 - min, Math.max(min, (e.clientX - b.left) / b.width));
+    splitRatios[id] = v;
+    setR(v);
+  };
+  const stop = () => setDragging(false);
+  return (
+    <div ref={host} style={{
+      flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateRows: 'minmax(0,1fr)',
+      gridTemplateColumns: `minmax(0,${r}fr) 9px minmax(0,${1 - r}fr)`
+    }}>
+      {children[0]}
+      {/* pointer capture keeps the drag alive over iframes (HTML preview) and off-pane */}
+      <div className={'vsplitter' + (dragging ? ' dragging' : '')} title="Drag to resize"
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); setDragging(true); }}
+        onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} />
+      {children[1]}
+    </div>
+  );
+}

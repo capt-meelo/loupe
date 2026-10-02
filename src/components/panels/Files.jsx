@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLoupe } from '../../store.jsx';
-import { Chip, Mini, Search, EmptyState } from '../ui.jsx';
+import { Chip, Mini, Search, EmptyState, Split } from '../ui.jsx';
 
 const textPre = {
   flex: '1 1 auto', margin: 0, padding: '9px 11px', fontSize: 11,
@@ -220,9 +220,9 @@ export function Files() {
         )}
       </div>
 
-      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateRows: 'minmax(0,1fr)', gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,1fr)' }}>
+      <Split id="files" initial={0.52}>
         {/* listing */}
-        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--line)' }}>
+        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {results && (
             <div className="panel-foot" style={{ borderBottom: '1px solid var(--line)', borderTop: 'none' }}>
               <span>{results.length} result{results.length === 1 ? '' : 's'} under {s.findRoot}</span>
@@ -295,7 +295,7 @@ export function Files() {
         <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <Preview />
         </div>
-      </div>
+      </Split>
 
       {s.transfer && (
         <div className="panel-foot" style={{ color: 'var(--accent)' }}>

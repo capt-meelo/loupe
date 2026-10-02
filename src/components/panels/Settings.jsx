@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLoupe } from '../../store.jsx';
-import { Chip, Search, Mini, EmptyState } from '../ui.jsx';
+import { Chip, Search, Mini, EmptyState, Split } from '../ui.jsx';
 
 const NS = ['system', 'secure', 'global'];
 
@@ -39,8 +39,8 @@ export function Settings() {
         <button className="btn-quiet" onClick={reload}>Reload</button>
       </div>
 
-      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateRows: 'minmax(0,1fr)', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)' }}>
-        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--line)' }}>
+      <Split id="settings" initial={0.55}>
+        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <div className="scroll" style={{ flex: '1 1 auto' }}>
             {s.settingsBusy && <div className="mono" style={{ color: 'var(--ink3)', padding: '10px 12px' }}>Reading settings…</div>}
             {rows.map((r) => (
@@ -77,7 +77,7 @@ export function Settings() {
             </div>
           )}
         </div>
-      </div>
+      </Split>
     </>
   );
 }

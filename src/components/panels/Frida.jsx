@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { useLoupe } from '../../store.jsx';
-import { EmptyState, Mini, AppSelect } from '../ui.jsx';
+import { EmptyState, Mini, AppSelect, Split } from '../ui.jsx';
 
 const sectionHead = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
@@ -66,8 +66,8 @@ export function Frida() {
           : <Mini label="Start server" disabled={s.fridaWorking || !s.fridaInstalled} onClick={startFrida} />}
       </div>
 
-      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)' }}>
-        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--line)' }}>
+      <Split id="frida">
+        <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <div style={sectionHead}>
             <span>Script</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, textTransform: 'none', letterSpacing: 0 }}>
@@ -136,7 +136,7 @@ export function Frida() {
             )}
           </div>
         </div>
-      </div>
+      </Split>
     </>
   );
 }
