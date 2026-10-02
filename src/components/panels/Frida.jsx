@@ -102,7 +102,7 @@ export function Frida() {
             <CodeMirror
               value={s.script}
               onChange={(v) => set({ script: v })}
-              theme="dark"
+              theme={s.theme === 'light' ? 'light' : 'dark'}
               height="100%"
               extensions={[javascript()]}
               basicSetup={{ lineNumbers: true, highlightActiveLine: true, foldGutter: false, autocompletion: false }}

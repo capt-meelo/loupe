@@ -137,7 +137,7 @@ function DeviceScreen({ canvasRef }) {
       position: 'relative', aspectRatio: aspect,
       flex: '1 1 auto', minHeight: 0, height: 'auto', width: 'auto', maxWidth: '100%',
       borderRadius: 18, overflow: 'hidden', border: '1px solid var(--line2)',
-      background: '#12141a', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
       boxShadow: 'var(--sh)',
       cursor: s.mirrorOn ? 'crosshair' : 'default',
       touchAction: 'none', userSelect: 'none'

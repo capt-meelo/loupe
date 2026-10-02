@@ -194,11 +194,16 @@ export function Header() {
         </button>
       )}
 
-      <button className="btn-icon" title="Toggle theme" onClick={toggleTheme}>
-        <Icon>
-          <circle cx="8" cy="8" r="3.4" />
-          <path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.1 3.1l1.1 1.1M11.8 11.8l1.1 1.1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1" />
-        </Icon>
+      <button className="btn-icon" onClick={toggleTheme}
+        title={s.theme === 'dark' ? 'Dark theme (switch to light)' : 'Light theme (switch to dark)'}>
+        {s.theme === 'dark'
+          ? <Icon d="M13.5 9.6A5.8 5.8 0 1 1 6.4 2.5a4.6 4.6 0 0 0 7.1 7.1z" />
+          : (
+            <Icon>
+              <circle cx="8" cy="8" r="3.4" />
+              <path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.1 3.1l1.1 1.1M11.8 11.8l1.1 1.1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1" />
+            </Icon>
+          )}
       </button>
     </header>
   );
