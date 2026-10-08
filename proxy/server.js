@@ -13,6 +13,8 @@ import net from 'node:net';
 import { handleAdbApi, attachAdbSockets, accessOk } from './adb-bridge.js';
 import { handleFridaApi, attachFridaSockets } from './frida.js';
 import { handleCertApi } from './cert.js';
+import { handleJadxApi } from './jadx.js';
+import { TOKEN, hostOk, tokenOk } from './auth.js';
 
 function localAddresses() {
   const out = [];
@@ -39,9 +41,23 @@ export function startProxy({ port = 8080, host = '0.0.0.0' } = {}) {
     cors(req, res);
     if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
 
+    // The page's way to learn the token: same-origin browser requests only.
+    if (path === '/__loupe/session') {
+      const site = req.headers['sec-fetch-site'];
+      // Only a same-origin browser fetch may mint a session: raw clients (no Sec-Fetch-Site) are refused. The loopback
+      // gate above already keeps other machines out; this also keeps unmarked local callers from collecting the token.
+      if (!hostOk(req) || site !== 'same-origin') { res.writeHead(403).end(); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ token: TOKEN }));
+      return;
+    }
+    if (!hostOk(req)) { res.writeHead(403).end(); return; }
+    if (!tokenOk(req)) { res.writeHead(401, { 'Content-Type': 'application/json' }).end('{"ok":false,"error":"unauthorized"}'); return; }
+
     if (path.startsWith('/__loupe/adb/')) { handleAdbApi(req, res, path); return; }
     if (path.startsWith('/__loupe/frida/')) { handleFridaApi(req, res, path, { cors }); return; }
     if (path.startsWith('/__loupe/cert/')) { handleCertApi(req, res, path); return; }
+    if (path.startsWith('/__loupe/jadx/')) { handleJadxApi(req, res, path); return; }
     if (path === '/__loupe/info') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, addresses: localAddresses() }));
@@ -64,8 +80,9 @@ export function startProxy({ port = 8080, host = '0.0.0.0' } = {}) {
     res.end('Loupe bridge.');
   });
 
-  attachAdbSockets(server);   // /__loupe/adb/socket relay
-  attachFridaSockets(server, { accessOk });   // /__loupe/frida/session
+  const gate = (req) => accessOk(req) && hostOk(req) && tokenOk(req);
+  attachAdbSockets(server, { accessOk: gate });   // /__loupe/adb/socket relay
+  attachFridaSockets(server, { accessOk: gate }); // /__loupe/frida/session
 
   return new Promise((resolve, reject) => {
     // A busy port emits 'error' asynchronously. Without this handler it becomes

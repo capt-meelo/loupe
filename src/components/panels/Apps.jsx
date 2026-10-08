@@ -23,7 +23,7 @@ function AppBadge({ pkg, name }) {
 
 /** Right-hand detail for the selected package, from `dumpsys package`. */
 function AppInfo() {
-  const { s, browseTo, clearAppData, clearAppCache, setAppEnabled } = useLoupe();
+  const { s, set, browseTo, clearAppData, clearAppCache, setAppEnabled, ask } = useLoupe();
 
   if (!s.appSel) return <div className="mono preview-note">Select an app to see its details.</div>;
   if (s.appInfoBusy) return <div className="mono preview-note">Reading dumpsys package…</div>;
@@ -48,17 +48,19 @@ function AppInfo() {
       <div className="preview-head mono">
         <span style={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.appSel}</span>
         <span style={{ flex: '0 0 auto', display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
+          <Mini label="decompile" title="Pull this app's APK and open it in the Decompiler"
+            onClick={() => set({ view: 'decompiler', jxRequest: { kind: 'package', pkg: s.appSel } })} />
           {i.dataDir && i.dataDir !== '—' && (
             <Mini label="data dir" title="Open the data dir in Files" onClick={() => browseTo(i.dataDir)} />
           )}
           <Mini label={i.enabled ? 'disable' : 'enable'}
             onClick={() => {
-              if (i.enabled) { if (window.confirm(`Disable ${s.appSel}?`)) setAppEnabled(s.appSel, false); }
+              if (i.enabled) ask({ title: 'Disable this app?', body: <>The app will stop running and disappear from the launcher until you enable it again: <span className="mono" style={{ color: 'var(--ink)' }}>{s.appSel}</span>.</>, yes: 'Disable' }, () => setAppEnabled(s.appSel, false));
               else setAppEnabled(s.appSel, true);
             }} />
           <Mini label="clear cache" onClick={() => clearAppCache(s.appSel)} />
           <Mini tone="danger" label="clear data"
-            onClick={() => { if (window.confirm(`Clear all data for ${s.appSel}? This cannot be undone.`)) clearAppData(s.appSel); }} />
+            onClick={() => ask({ title: 'Clear all data?', body: <>This deletes every file, database, and setting of <span className="mono" style={{ color: 'var(--ink)' }}>{s.appSel}</span>. It cannot be undone.</>, yes: 'Clear data', danger: true }, () => clearAppData(s.appSel))} />
         </span>
       </div>
 
@@ -86,7 +88,7 @@ function AppInfo() {
 }
 
 export function Apps() {
-  const { s, set, loadApps, toast, runShell, showAppInfo, installApk, uninstallApp } = useLoupe();
+  const { s, set, loadApps, toast, runShell, showAppInfo, installApk, uninstallApp, ask } = useLoupe();
   const apkRef = useRef(null);
 
   useEffect(() => {
@@ -149,7 +151,7 @@ export function Apps() {
                   }} />
                   <Mini tone="danger" label="uninstall" onClick={(e) => {
                     e.stopPropagation();
-                    if (window.confirm(`Uninstall ${pkg}?`)) uninstallApp(pkg);
+                    ask({ title: 'Uninstall this app?', body: <><span className="mono" style={{ color: 'var(--ink)' }}>{pkg}</span> and its data will be removed from the phone.</>, yes: 'Uninstall', danger: true }, () => uninstallApp(pkg));
                   }} />
                 </span>
               </div>

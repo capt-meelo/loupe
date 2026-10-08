@@ -322,21 +322,46 @@ export const makeDir = (path) => shChecked(`mkdir -p ${q(path)}`);
 
 // ----------------------------------------------------------------- app ops --
 
-/** Installs an APK: push to a temp path, `pm install -r`, then clean up. */
-export async function installApk(file, onStep = () => {}) {
+// Android 14+ refuses apps that target an old SDK. `pm` words it a few ways across versions.
+const LOW_TARGET = /DEPRECATED_SDK_VERSION|target at least SDK|older version of Android|low.?target.?sdk/i;
+
+/** Installs an APK: push to a temp path, `pm install -r`, then clean up.
+ *  Throws an error with code 'low-target-sdk' when the OS blocks an old-target app; retry with { bypassSdk: true } to override. */
+export async function installApk(file, onStep = () => {}, { bypassSdk = false, onBlocked = null } = {}) {
   if (!current) throw new Error('No device connected.');
   const tmp = `/data/local/tmp/loupe-${Date.now()}.apk`;
   onStep(`pushing ${file.name} (${(file.size / 1048576).toFixed(1)} MB)…`);
   await pushFile(tmp, file);
-  onStep('pm install -r …');
+  onStep(bypassSdk ? 'pm install -r --bypass-low-target-sdk-block …' : 'pm install -r …');
+  // Play Protect can hold `pm install` open while it asks on the phone, with no error to catch. Watch for its dialog.
+  let watch = null, told = false;
+  if (onBlocked) {
+    watch = setInterval(async () => {
+      if (told) return;
+      const focus = await run('dumpsys window | grep -m1 mCurrentFocus').catch(() => '');
+      if (/PlayProtectDialogs/.test(focus)) { told = true; onBlocked(); }
+    }, 2500);
+  }
   try {
-    const out = await run(`pm install -r ${q(tmp)}`);
-    if (!/success/i.test(out)) throw new Error(out.trim() || 'pm install failed');
+    const out = await run(`pm install -r ${bypassSdk ? '--bypass-low-target-sdk-block ' : ''}${q(tmp)}`);
+    if (!/success/i.test(out)) {
+      const err = new Error(out.trim() || 'pm install failed');
+      if (!bypassSdk && LOW_TARGET.test(out)) err.code = 'low-target-sdk';
+      throw err;
+    }
     return out.trim();
   } finally {
+    if (watch) clearInterval(watch);
     await run(`rm -f ${q(tmp)}`).catch(() => {});
   }
 }
+
+/** Stops a `pm install` that is waiting on Play Protect and dismisses its dialog on the phone. */
+// HOME first: BACK does not dismiss that dialog, and `pkill -9` may take its own shell down with it.
+export const abortInstall = () => run('input keyevent KEYCODE_HOME; pkill -9 -f "[p]m install"').catch(() => {});
+
+/** Stops Play Protect from scanning installs that come over adb (reversible: set it back to 1). */
+export const skipAdbScan = () => run('settings put global verifier_verify_adb_installs 0');
 
 /** Parsed `dumpsys package` details for one package. */
 export async function packageInfo(pkg) {

@@ -1,0 +1,10 @@
+<svg width="64" height="64" viewBox="336 100 460 460" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loupe">
+  <rect x="336" y="100" width="460" height="460" rx="96" fill="#050505"/>
+  <g stroke="#b9f740" stroke-linecap="round">
+    <circle cx="539" cy="300" r="143" stroke-width="38"/>
+    <line x1="640" y1="404" x2="730" y2="498" stroke-width="44"/>
+    <line x1="490" y1="262" x2="478" y2="242" stroke-width="9"/>
+    <line x1="587" y1="262" x2="599" y2="242" stroke-width="9"/>
+  </g>
+  <path fill="#b9f740" fill-rule="evenodd" d="M451 348a88 88 0 0 1 176 0zM492 313a10 10 0 1 0 20 0a10 10 0 1 0-20 0zM566 313a10 10 0 1 0 20 0a10 10 0 1 0-20 0z"/>
+</svg>

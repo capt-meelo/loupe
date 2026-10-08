@@ -13,8 +13,10 @@
  */
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import net from 'node:net';
 import { homedir } from 'node:os';
 import { WebSocketServer } from 'ws';
+import { handleProtocols } from './auth.js';
 import { AdbServerClient } from '@yume-chan/adb';
 import { AdbServerNodeTcpConnector } from '@yume-chan/adb-server-node-tcp';
 
@@ -31,8 +33,35 @@ const getClient = () => {
   return client;
 };
 
+const adbUp = () => new Promise((resolve) => {
+  const s = net.connect({ host: '127.0.0.1', port: 5037 });
+  const done = (ok) => { s.destroy(); resolve(ok); };
+  s.setTimeout(1000, () => done(false));
+  s.once('connect', () => done(true));
+  s.once('error', () => done(false));
+});
+
+/**
+ * On Linux, starts the adb server ourselves when nothing answers on 5037.
+ * Under WSL2 mirrored networking a connect to a closed loopback port hangs
+ * instead of being refused, so `adb start-server` stalls on its own probe and
+ * the server never comes up. `adb server nodaemon` skips the probe.
+ */
+let starting = null;
+const ensureAdbServer = () => {
+  if (process.platform !== 'linux') return Promise.resolve();
+  return (starting ??= (async () => {
+    if (await adbUp()) return;
+    const child = spawn(ADB, ['-L', 'tcp:5037', 'server', 'nodaemon'], { stdio: 'ignore', detached: true });
+    child.on('error', () => {});
+    child.unref();
+    for (let i = 0; i < 20 && !(await adbUp()); i++) await new Promise((r) => setTimeout(r, 250));
+  })().finally(() => { starting = null; }));
+};
+
 /** Runs the adb CLI and resolves with its combined output. */
-export function adbCli(args, { timeoutMs = 60000 } = {}) {
+export async function adbCli(args, { timeoutMs = 60000 } = {}) {
+  await ensureAdbServer();
   return new Promise((resolve) => {
     const child = spawn(ADB, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
@@ -203,13 +232,13 @@ export async function handleAdbApi(req, res, path) {
  * Upgrades /__loupe/adb/socket?serial=&service= into a byte relay between the
  * browser and an ADB service on the device.
  */
-export function attachAdbSockets(server) {
-  const wss = new WebSocketServer({ noServer: true });
+export function attachAdbSockets(server, { accessOk: gate = accessOk } = {}) {
+  const wss = new WebSocketServer({ noServer: true, handleProtocols });
 
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url, 'http://x');
     if (url.pathname !== '/__loupe/adb/socket') return;      // leave others alone
-    if (!accessOk(req)) { socket.destroy(); return; }
+    if (!gate(req)) { socket.destroy(); return; }
 
     wss.handleUpgrade(req, socket, head, (ws) => {
       const serial = url.searchParams.get('serial');

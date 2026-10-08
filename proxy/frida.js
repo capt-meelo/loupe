@@ -58,9 +58,13 @@ export async function latestVersion(arch) {
   return newest.version;
 }
 
-/** Fetches one server binary, decompressed. `version` may be 'latest'. */
+// The frida client in node_modules and the server on the phone have to be the same release: a newer server
+// connects, then spawn or attach hangs or the agent crashes. So 'latest' means the version this install runs.
+const CLIENT_VERSION = JSON.parse(readFileSync(fileURLToPath(new URL('../node_modules/frida/package.json', import.meta.url)), 'utf8')).version;
+
+/** Fetches one server binary, decompressed. `version` may be 'latest', which means the release matching the bundled client. */
 export async function fetchServer(version, arch) {
-  if (!version || version === 'latest') version = await latestVersion(arch);
+  if (!version || version === 'latest') version = CLIENT_VERSION;
   const name = assetName(version, arch);
   const url = `https://github.com/frida/frida/releases/download/${encodeURIComponent(version)}/${name}`;
   const res = await fetch(url, { headers: UA, redirect: 'follow' });
@@ -149,8 +153,7 @@ export async function handleFridaApi(req, res, path, { cors }) {
     }
 
     if (path === '/__loupe/frida/server') {
-      // No version, or 'latest', resolves to the newest release every time —
-      // nothing here is cached, so a stale pin can't creep in.
+      // No version, or 'latest', is the release matching the bundled frida client. Nothing is cached.
       const { name, bytes, packedSize, version } = await fetchServer(
         url.searchParams.get('version'), arch
       );
@@ -193,6 +196,7 @@ import { readFileSync } from 'node:fs';
 import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
+import { handleProtocols } from './auth.js';
 import frida from 'frida';
 
 // Frida 17 removed the bundled Java/ObjC bridges from the agent runtime, so a
@@ -267,7 +271,7 @@ const unshift = (n, offset) => (n > offset ? n - offset : n);
  * run: closing it unloads the script and tears the tunnel down.
  */
 export function attachFridaSockets(server, { accessOk }) {
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ noServer: true, handleProtocols });
 
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url, 'http://x');

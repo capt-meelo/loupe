@@ -56,9 +56,9 @@ export function Frida() {
           {s.fridaInstalled ? `installed v${s.fridaInstalled}` : 'not installed'}
         </span>
 
-        <Mini label={s.fridaWorking ? 'Working…' : s.fridaInstalled ? 'Update to latest' : 'Download + install'}
+        <Mini label={s.fridaWorking ? 'Working…' : s.fridaInstalled ? 'Reinstall matching server' : 'Download + install'}
           tone="accent" disabled={s.fridaWorking || !s.connected}
-          title="Fetches the newest frida-server for this device's ABI and pushes it to /data/local/tmp"
+          title="Fetches the frida-server release that matches Loupe's Frida client, for this device's ABI, and pushes it to /data/local/tmp"
           onClick={installFrida} />
 
         {f?.running

@@ -3,6 +3,7 @@ import React, {
 } from 'react';
 import * as webadb from './lib/webadb.js';
 import * as mirror from './lib/scrcpy.js';
+import { bridgeFetch, bridgeWS } from './lib/bridge.js';
 import * as record from './lib/record.js';
 import { buildCore, machineFor } from './lib/elfcore.js';
 
@@ -212,10 +213,26 @@ function parsePerf(text, prevRef, now) {
   return { cpu, mem, battery, storage, load, uptime, network, fps, fpsApp };
 }
 
+// Pane sizes survive reloads. Anything unreadable falls back to the defaults below.
+const LAYOUT_KEY = 'loupe.layout';
+const savedLayout = (() => {
+  try {
+    const j = JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {};
+    const out = {};
+    if (typeof j.split === 'number' && j.split > 0.1 && j.split < 0.9) out.split = j.split;
+    if (typeof j.railW === 'number' && j.railW >= 260 && j.railW < 4000) out.railW = j.railW;
+    return out;
+  } catch { return {}; }
+})();
+
+export const DEFAULT_LAYOUT = { topTabs: ['info', 'logcat', 'traffic', 'proxy', 'perf', 'inspector', 'settings'], bottomTabs: ['files', 'apps', 'procs', 'memory', 'shell', 'frida'], top: 'info', bottom: 'shell', split: 0.52, railW: 416, topOpen: true, bottomOpen: true };
+
 const initialState = {
   theme: 'dark',
+  view: 'console',     // 'console' | 'decompiler'
+  jxRequest: null,     // a request for the decompiler (from Apps, Files, drag-and-drop)
   connected: false,
-  devOpen: false, rebootOpen: false,
+  devOpen: false, rebootOpen: false, installPrompt: null, confirmAsk: null,
   device: null,
   deviceInfo: null,
   usbSupported: webadb.usbSupported(),
@@ -235,6 +252,7 @@ const initialState = {
   bottomTabs: ['files', 'apps', 'procs', 'memory', 'shell', 'frida'],
   split: 0.52,
   railW: 416,          // mirror rail width in px, dragged by the rail edge
+  ...savedLayout,
   topOpen: true,
   bottomOpen: true,
 
@@ -308,6 +326,7 @@ export const useLoupe = () => useContext(Ctx);
 export function LoupeProvider({ children }) {
   const [s, dispatch] = useReducer(reducer, initialState);
   const toastTimer = useRef(null);
+  const installAborted = useRef(false);   // we stopped an install on purpose, so its failure is not news
   const qrCancel = useRef(null);
   const fridaWs = useRef(null);
   const appIconsRef = useRef({});   // pkg → data URL | null (in-flight), so each is fetched once
@@ -316,6 +335,10 @@ export function LoupeProvider({ children }) {
   const update = useCallback((fn) => dispatch({ type: 'update', fn }), []);
 
   useEffect(() => { document.documentElement.dataset.theme = s.theme; }, [s.theme]);
+  useEffect(() => {
+    const t = setTimeout(() => { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ split: s.split, railW: s.railW })); } catch { /* private mode */ } }, 300);
+    return () => clearTimeout(t);
+  }, [s.split, s.railW]);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   /**
@@ -371,7 +394,7 @@ export function LoupeProvider({ children }) {
   /** This machine's LAN addresses, to suggest as the proxy host (e.g. Burp). */
   useEffect(() => {
     let cancelled = false;
-    fetch(`/__loupe/info`)
+    bridgeFetch(`/__loupe/info`)
       .then((r) => r.json())
       .then((info) => { if (!cancelled) set({ proxyHosts: info.addresses || [] }); })
       .catch(() => {});
@@ -547,7 +570,7 @@ export function LoupeProvider({ children }) {
           || await webadb.run('getprop ro.product.cpu.abi').catch(() => 'arm64-v8a');
         fridaLog(`resolving the latest frida-server for ${abi.trim()}…`);
 
-        const res = await fetch(
+        const res = await bridgeFetch(
           `/__loupe/frida/server?abi=${encodeURIComponent(abi.trim())}`,
           { cache: 'no-store' }
         );
@@ -616,7 +639,7 @@ export function LoupeProvider({ children }) {
       if (link) {
         fridaLine(`· fetching script from ${link}…`);
         try {
-          const r = await fetch(
+          const r = await bridgeFetch(
             `/__loupe/frida/script?url=${encodeURIComponent(link)}`,
             { signal: AbortSignal.timeout(20000) }
           );
@@ -639,7 +662,9 @@ export function LoupeProvider({ children }) {
 
       const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
       const url = `${wsProto}://${location.host}/__loupe/frida/session?serial=${encodeURIComponent(dev.serial)}`;
-      const ws = new WebSocket(url);
+      let ws;
+      try { ws = await bridgeWS(url); }
+      catch (e) { fridaLine(`  ✗ bridge refused the connection: ${e.message}`); set({ fridaRunning: false }); return; }
       ws.binaryType = 'arraybuffer';
       fridaWs.current = ws;
 
@@ -979,18 +1004,40 @@ export function LoupeProvider({ children }) {
       } catch (e) { toast('settings delete: ' + e.message); }
     };
 
-    const installApk = async (file) => {
+    const installApk = async (file, { bypassSdk = false } = {}) => {
       if (!file) return;
-      set({ installBusy: true });
+      set({ installBusy: true, installPrompt: null });
       const step = (m) => shellOut(['· ' + m], 'dim');
       try {
-        const out = await webadb.installApk(file, step);
+        const out = await webadb.installApk(file, step, { bypassSdk, onBlocked: () => set({ installPrompt: { kind: 'playprotect', file } }) });
         toast('Installed: ' + out);
         loadApps(s.appFilter);
       } catch (e) {
+        if (installAborted.current) { installAborted.current = false; return; }
         shellOut(['· install FAILED: ' + e.message], 'dim');
-        toast('Install failed: see the shell.');
-      } finally { set({ installBusy: false }); }
+        // The OS blocked an app built for an old Android: ask before overriding it.
+        if (e.code === 'low-target-sdk') set({ installPrompt: { kind: 'sdk', file, detail: e.message } });
+        else toast('Install failed: see the shell.');
+      } finally {
+        update((st) => ({ installBusy: false, installPrompt: st.installPrompt?.kind === 'playprotect' ? null : st.installPrompt }));
+      }
+    };
+    /** Play Protect is asking on the phone. Stop that install, turn off its adb scan, and install again. */
+    const installWithoutScan = async (file) => {
+      installAborted.current = true;
+      set({ installPrompt: null });
+      shellOut(['· turning off Play Protect scanning for adb installs (verifier_verify_adb_installs=0)…'], 'dim');
+      try { await webadb.skipAdbScan(); } catch (e) { installAborted.current = false; toast('Could not change the setting: ' + e.message); return; }
+      await webadb.abortInstall();
+      await new Promise((r) => setTimeout(r, 600));
+      installApk(file);
+    };
+    const ask = (opts, run) => set({ confirmAsk: { ...opts, run } });
+    const cancelInstall = async () => {
+      installAborted.current = true;
+      set({ installPrompt: null });
+      await webadb.abortInstall();
+      shellOut(['· install cancelled'], 'dim');
     };
 
     // Same-origin: Vite proxies /__loupe to the bridge, so no second port.
@@ -1053,7 +1100,7 @@ export function LoupeProvider({ children }) {
       if (!host || !port) { toast('Enter a proxy host and port'); return; }
       proxyLogStart(`testing ${host}:${port}…`);
       try {
-        const r = await fetch(`/__loupe/proxy/test?host=${encodeURIComponent(host)}&port=${encodeURIComponent(port)}`);
+        const r = await bridgeFetch(`/__loupe/proxy/test?host=${encodeURIComponent(host)}&port=${encodeURIComponent(port)}`);
         const j = await r.json();
         if (j.ok) {
           proxyLog(`✓ ${host}:${port} is accepting connections`);
@@ -1113,7 +1160,7 @@ export function LoupeProvider({ children }) {
       proxyLogStart(`preparing ${file.name}…`);
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
-        const res = await fetch(`${proxyBase}/__loupe/cert/prepare`, { method: 'POST', body: bytes });
+        const res = await bridgeFetch(`${proxyBase}/__loupe/cert/prepare`, { method: 'POST', body: bytes });
         const j = await res.json();
         if (!j.ok) throw new Error(j.error || 'could not read that certificate');
         const { pem, hash } = j;
@@ -1355,7 +1402,7 @@ export function LoupeProvider({ children }) {
         set({ clipboard: { path: full, name: entry[0], op: 'cut' } });
         toast('Cut ' + entry[0]);
       },
-      showAppInfo, installApk, uninstallApp, clearAppData, clearAppCache, setAppEnabled,
+      showAppInfo, installApk, installWithoutScan, cancelInstall, ask, uninstallApp, clearAppData, clearAppCache, setAppEnabled,
       loadSettings, putSetting, deleteSetting, browseTo, toggleRoot,
       isRecording: record.isRecording,
       setDeviceProxy, clearDeviceProxy, refreshDeviceProxy, testProxy, installCert, removeCert, checkCert,
@@ -1372,6 +1419,7 @@ export function LoupeProvider({ children }) {
        * handshake `adb pair` performs with a typed code.
        */
       startQr: () => {
+        qrCancel.current?.();
         const rand = (n) => Array.from(crypto.getRandomValues(new Uint8Array(n)))
           .map((b) => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
         const name = `loupe-${rand(6)}`;
@@ -1458,8 +1506,15 @@ export function LoupeProvider({ children }) {
           const host = addr.split(':')[0];
           const svc = (await webadb.wireless.listMdns())
             .find((x) => x.type.includes('adb-tls-connect') && x.addr.startsWith(host + ':'));
-          const target = svc ? svc.addr : `${host}:5555`;
-          const c = await webadb.wireless.connectTcp(target);
+          if (!svc) {
+            // No connect service found through mDNS (Ubuntu's apt adb is built without it; some networks block it): the connect port is on the phone's Wireless debugging screen.
+            update((st) => ({ wifiLog: st.wifiLog.concat('· paired. No connect port found through mDNS (adb may be built without it, or the network blocks it). Enter the address from the phone\'s Wireless debugging screen.') }));
+            set({ wifiBusy: false, pairCode: '', wifiTab: 'connect', connectAddr: host + ':' });
+            toast('Paired: enter the connect address');
+            actions.refreshWireless();
+            return;
+          }
+          const c = await webadb.wireless.connectTcp(svc.addr);
           update((st) => ({ wifiLog: st.wifiLog.concat('· ' + (c.output || '')) }));
           set({ wifiBusy: false, pairCode: '' });
           toast(c.ok ? 'Paired and connected' : 'Paired: connect failed, try Connect tab');

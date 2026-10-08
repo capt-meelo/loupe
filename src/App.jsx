@@ -1,9 +1,10 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { LoupeProvider, useLoupe } from './store.jsx';
 import { Header } from './components/Header.jsx';
 import { Mirror } from './components/Mirror.jsx';
 import { PanelSlot } from './components/PanelSlot.jsx';
 import { Toast } from './components/Toast.jsx';
+import { InstallPrompt, ConfirmDialog } from './components/Dialogs.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 
 import { Logcat, filterLogs } from './components/panels/Logcat.jsx';
@@ -16,6 +17,7 @@ import { Settings } from './components/panels/Settings.jsx';
 import { Shell } from './components/panels/Shell.jsx';
 import { Frida } from './components/panels/Frida.jsx';
 import { Files } from './components/panels/Files.jsx';
+const Decompiler = lazy(() => import('./components/Decompiler.jsx'));
 import { Apps } from './components/panels/Apps.jsx';
 import { Procs } from './components/panels/Procs.jsx';
 import { DeviceInfo } from './components/panels/DeviceInfo.jsx';
@@ -32,10 +34,27 @@ const LABELS = {
 };
 
 function Workspace() {
-  const { s, set } = useLoupe();
+  const { s, set, toast } = useLoupe();
   const host = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [railDragging, setRailDragging] = useState(false);
+  const [mounted, setMounted] = useState(false);     // load the decompiler chunk on first use
+  useEffect(() => { if (s.view === 'decompiler') setMounted(true); }, [s.view]);
+
+  // Drop an .apk anywhere to decompile it.
+  useEffect(() => {
+    const has = (e) => [...(e.dataTransfer?.items || [])].some((i) => i.kind === 'file');
+    const over = (e) => { if (has(e)) e.preventDefault(); };
+    const drop = (e) => {
+      if (!has(e)) return;
+      e.preventDefault();                               // any file drop: never let the browser navigate away
+      const files = [...e.dataTransfer.files].filter((f) => /\.apk$/i.test(f.name));
+      if (files.length) set({ view: 'decompiler', jxRequest: { kind: 'files', files } });
+      else toast('Drop an .apk file to decompile it');
+    };
+    window.addEventListener('dragover', over); window.addEventListener('drop', drop);
+    return () => { window.removeEventListener('dragover', over); window.removeEventListener('drop', drop); };
+  }, []);
 
   // Narrow deps: re-filtering thousands of logs on every unrelated state change
   // was a big part of the slowdown.
@@ -102,7 +121,9 @@ function Workspace() {
     }}>
       <Header />
 
-      <div style={{ display: 'grid', gridTemplateColumns: `${s.railW}px auto minmax(0,1fr)`, minHeight: 0 }}>
+      {/* Both views stay mounted: hiding the console (not unmounting it) keeps the mirror decoding and logcat streaming. */}
+      <div style={{ display: 'grid', gridTemplateRows: 'minmax(0,1fr)', minHeight: 0 }}>
+      <div style={{ display: s.view === 'console' ? 'grid' : 'none', gridTemplateColumns: `${s.railW}px auto minmax(0,1fr)`, minHeight: 0 }}>
         <Mirror />
 
         <div className={'vsplitter' + (railDragging ? ' dragging' : '')}
@@ -112,13 +133,18 @@ function Workspace() {
           <PanelSlot isTop defs={topDefs} panels={PANELS} onMoveTab={moveTab}
             active={s.top} open={s.topOpen} other={s.bottomOpen} split={s.split} />
 
-          <div className={'splitter' + (dragging ? ' dragging' : '')} onMouseDown={startDrag} />
+          <div className={'splitter' + (dragging ? ' dragging' : '')} onMouseDown={startDrag}
+            title={`Drag to resize (${Math.round(s.split * 100)}% / ${Math.round((1 - s.split) * 100)}%)`} />
 
           <PanelSlot defs={bottomDefs} panels={PANELS} onMoveTab={moveTab}
             active={s.bottom} open={s.bottomOpen} other={s.topOpen} split={1 - s.split} />
         </main>
       </div>
+      {mounted && <Suspense fallback={null}><Decompiler /></Suspense>}
+      </div>
 
+      <InstallPrompt />
+      <ConfirmDialog />
       <Toast />
     </div>
   );

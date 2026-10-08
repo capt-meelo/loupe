@@ -14,6 +14,3 @@ dist/
 .env.*
 *.log
 npm-debug.log*
-
-# Internal: used to take screenshots for the README
-scripts/capture-screenshots.mjs

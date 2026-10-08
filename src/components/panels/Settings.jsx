@@ -11,7 +11,7 @@ const editInput = {
 
 /** Browse and edit the system / secure / global settings namespaces. */
 export function Settings() {
-  const { s, set, loadSettings, putSetting, deleteSetting } = useLoupe();
+  const { s, set, loadSettings, putSetting, deleteSetting, ask } = useLoupe();
 
   useEffect(() => {
     if (s.connected && s.settings.length === 0 && !s.settingsBusy) loadSettings(s.settingsNs);
@@ -68,7 +68,7 @@ export function Settings() {
               <div style={{ display: 'flex', gap: 8 }}>
                 <Mini tone="accent" label="Set" onClick={() => putSetting(s.settingsNs, sel.k, s.settingsVal)} />
                 <Mini tone="danger" label="Delete"
-                  onClick={() => { if (window.confirm(`Delete ${s.settingsNs}/${sel.k}?`)) deleteSetting(s.settingsNs, sel.k); }} />
+                  onClick={() => ask({ title: 'Delete this setting?', body: <><span className="mono" style={{ color: 'var(--ink)' }}>{s.settingsNs}/{sel.k}</span> will be removed from the device.</>, yes: 'Delete', danger: true }, () => deleteSetting(s.settingsNs, sel.k))} />
               </div>
               <p className="mono" style={{ fontSize: 10.5, color: 'var(--ink3)', lineHeight: 1.6, margin: 0 }}>
                 Writes go through <span style={{ color: 'var(--ink2)' }}>settings put {s.settingsNs}</span>.

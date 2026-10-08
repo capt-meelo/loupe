@@ -1,21 +1,17 @@
-<svg width="780" height="210" viewBox="0 0 780 210" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loupe: Android Device Control Hub">
-  <rect x="1" y="1" width="778" height="208" rx="24" fill="#0a0b0d" stroke="#23272d" stroke-width="2"/>
-  <!-- magnifier inspecting an Android phone -->
-  <g transform="translate(70,42)">
-    <circle cx="62" cy="62" r="50" fill="none" stroke="#b6f24a" stroke-width="11"/>
-    <line x1="100" y1="100" x2="132" y2="132" stroke="#b6f24a" stroke-width="15" stroke-linecap="round"/>
-    <rect x="45" y="34" width="34" height="56" rx="7" fill="none" stroke="#b6f24a" stroke-width="4"/>
-    <!-- Android head, centered on the phone screen -->
-    <g fill="#b6f24a">
-      <line x1="54" y1="61" x2="52" y2="56" stroke="#b6f24a" stroke-width="2" stroke-linecap="round"/>
-      <line x1="70" y1="61" x2="72" y2="56" stroke="#b6f24a" stroke-width="2" stroke-linecap="round"/>
-      <path d="M49 72 v-1 a13 13 0 0 1 26 0 v1 z"/>
-      <circle cx="57.5" cy="67" r="1.8" fill="#0a0b0d"/>
-      <circle cx="66.5" cy="67" r="1.8" fill="#0a0b0d"/>
-    </g>
+<svg width="2000" height="667" viewBox="0 0 2000 667" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loupe: Android Control Hub">
+  <rect width="2000" height="667" rx="44" fill="#050505"/>
+  <!-- mark: magnifier inspecting the Android head -->
+  <g stroke="#b9f740" stroke-linecap="round">
+    <circle cx="539" cy="300" r="143" stroke-width="38"/>
+    <line x1="640" y1="404" x2="730" y2="498" stroke-width="44"/>
+    <line x1="490" y1="262" x2="478" y2="242" stroke-width="9"/>
+    <line x1="587" y1="262" x2="599" y2="242" stroke-width="9"/>
   </g>
-  <!-- wordmark -->
-  <text x="248" y="108" font-family="'Space Grotesk', system-ui, -apple-system, Segoe UI, sans-serif" font-size="82" font-weight="700" fill="#e8ebef">Loupe</text>
-  <rect x="250" y="126" width="186" height="6" rx="3" fill="#b6f24a"/>
-  <text x="252" y="164" font-family="'Space Grotesk', system-ui, -apple-system, Segoe UI, sans-serif" font-size="25" font-weight="500" letter-spacing="2.5" fill="#98a0aa">Android Device Control Hub</text>
+  <path d="M451 348a88 88 0 0 1 176 0z" fill="#b9f740"/>
+  <circle cx="502" cy="313" r="10" fill="#050505"/>
+  <circle cx="576" cy="313" r="10" fill="#050505"/>
+    <!-- "Loupe" in Poppins Bold (SIL OFL), converted to outlines so no font is needed -->
+  <path fill="#ffffff" d="M843.5 321.5H896.9V353H802.8V185.7H843.5ZM908.3 286.5Q908.3 266 917.4 250.4Q926.5 234.8 942.2 226.5Q957.9 218.1 977.4 218.1Q997 218.1 1012.7 226.5Q1028.4 234.8 1037.5 250.4Q1046.6 266 1046.6 286.5Q1046.6 307 1037.4 322.6Q1028.2 338.2 1012.4 346.6Q996.5 354.9 977 354.9Q957.4 354.9 941.8 346.6Q926.2 338.2 917.3 322.7Q908.3 307.2 908.3 286.5ZM1005.1 286.5Q1005.1 270.5 997.1 262Q989.1 253.4 977.4 253.4Q965.5 253.4 957.7 261.9Q949.8 270.3 949.8 286.5Q949.8 302.5 957.5 311.1Q965.3 319.6 977 319.6Q988.6 319.6 996.9 311.1Q1005.1 302.5 1005.1 286.5ZM1199.5 220V353H1158.8V334.9Q1152.6 343.7 1142 349.1Q1131.4 354.4 1118.5 354.4Q1103.3 354.4 1091.6 347.6Q1079.9 340.8 1073.5 328Q1067 315.1 1067 297.7V220H1107.6V292.2Q1107.6 305.6 1114.5 313Q1121.4 320.4 1133.1 320.4Q1145 320.4 1151.9 313Q1158.8 305.6 1158.8 292.2V220ZM1310.6 218.1Q1327 218.1 1340.4 226.5Q1353.7 234.8 1361.5 250.3Q1369.2 265.8 1369.2 286.3Q1369.2 306.8 1361.5 322.4Q1353.7 338 1340.4 346.4Q1327 354.9 1310.6 354.9Q1296.8 354.9 1286.2 349.2Q1275.6 343.5 1269.6 334.4V416.4H1228.9V220H1269.6V238.9Q1275.6 229.6 1286 223.8Q1296.5 218.1 1310.6 218.1ZM1298.4 253.6Q1286.3 253.6 1277.8 262.4Q1269.4 271.3 1269.4 286.5Q1269.4 301.8 1277.8 310.6Q1286.3 319.4 1298.4 319.4Q1310.6 319.4 1319.2 310.5Q1327.7 301.5 1327.7 286.3Q1327.7 271 1319.3 262.3Q1310.8 253.6 1298.4 253.6ZM1515.3 296.3H1423.1Q1424 308.7 1431 315.2Q1438.1 321.8 1448.3 321.8Q1463.6 321.8 1469.5 308.9H1512.9Q1509.6 322 1500.9 332.5Q1492.2 343 1479.1 348.9Q1466 354.9 1449.8 354.9Q1430.2 354.9 1415 346.6Q1399.7 338.2 1391.1 322.7Q1382.6 307.2 1382.6 286.5Q1382.6 265.8 1391 250.3Q1399.5 234.8 1414.7 226.5Q1430 218.1 1449.8 218.1Q1469.1 218.1 1484.1 226.2Q1499.1 234.3 1507.5 249.3Q1516 264.4 1516 284.4Q1516 290.1 1515.3 296.3ZM1474.3 273.6Q1474.3 263.2 1467.1 257Q1460 250.8 1449.3 250.8Q1439 250.8 1432 256.7Q1425 262.7 1423.3 273.6Z"/>
+  <rect x="788" y="393" width="421" height="21" rx="10.5" fill="#b9f740"/>
+  <text x="787" y="486" fill="#e9e9e9" font-family="Poppins, 'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="58" font-weight="500">Android Control Hub</text>
 </svg>

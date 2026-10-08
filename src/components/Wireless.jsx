@@ -39,7 +39,11 @@ export function Wireless() {
       <div style={{ display: 'flex', gap: 4 }}>
         {TABS.map((t) => (
           <Tab key={t.id} on={s.wifiTab === t.id} label={t.label}
-            onClick={() => (t.id === 'qr' ? startQr() : set({ wifiTab: t.id }))} />
+            onClick={() => {
+              if (t.id === 'qr') { startQr(); return; }
+              if (s.qr) cancelQr();   // a pending QR wait keeps wifiBusy on and disables Pair and Connect
+              set({ wifiTab: t.id });
+            }} />
         ))}
       </div>
 

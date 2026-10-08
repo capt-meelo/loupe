@@ -15,6 +15,7 @@ import {
   ADB_SERVER_DEFAULT_FEATURES
 } from '@yume-chan/adb';
 import { ReadableStream, MaybeConsumable } from '@yume-chan/stream-extra';
+import { bridgeFetch, bridgeWS } from './bridge.js';
 
 // Same-origin: Vite proxies /__loupe to the bridge, so we never name its port.
 // HTTP is a relative path; the WebSocket URL is derived from the page's own host.
@@ -22,7 +23,7 @@ const httpBase = '/__loupe/adb';
 const wsBase = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/__loupe/adb/socket`;
 
 async function api(path, init) {
-  const res = await fetch(`${httpBase}${path}`, init);
+  const res = await bridgeFetch(`${httpBase}${path}`, init);
   const body = await res.json().catch(() => ({}));
   if (!res.ok && body.error) throw new Error(body.error);
   return body;
@@ -50,10 +51,11 @@ export const killServer = () => api('/kill-server', { method: 'POST' });
 
 /** One ADB service, relayed over a WebSocket. */
 function openService(serial, service) {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(
-      `${wsBase}?serial=${encodeURIComponent(serial)}&service=${encodeURIComponent(service)}`
-    );
+  return new Promise(async (resolve, reject) => {
+    let ws;
+    try {
+      ws = await bridgeWS(`${wsBase}?serial=${encodeURIComponent(serial)}&service=${encodeURIComponent(service)}`);
+    } catch (e) { reject(e); return; }
     ws.binaryType = 'arraybuffer';
 
     let closedResolve;

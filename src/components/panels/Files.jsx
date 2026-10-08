@@ -141,7 +141,7 @@ function Preview() {
 export function Files() {
   const { s, set, loadFiles, selectFile, downloadFile, uploadFiles,
           deleteEntry, copyEntry, cutEntry, pasteHere, newFolder,
-          searchFiles, clearSearch, revealPath } = useLoupe();
+          searchFiles, clearSearch, revealPath, ask } = useLoupe();
   const uploadRef = useRef(null);
 
   const path = s.path;
@@ -211,10 +211,13 @@ export function Files() {
               {selEntry[1] === 'd' ? '▸' : '·'} {selEntry[0]}
             </span>
             <Mini label="Download" onClick={() => downloadFile(selEntry)} />
+            {/\.apk$/i.test(selEntry[0]) && (
+              <Mini label="Decompile" onClick={() => set({ view: 'decompiler', jxRequest: { kind: 'path', path: (path === '/' ? '' : path) + '/' + selEntry[0] } })} />
+            )}
             <Mini label="Copy" onClick={() => copyEntry(selEntry)} />
             <Mini label="Cut" onClick={() => cutEntry(selEntry)} />
             <Mini tone="danger" label="Delete" onClick={() => {
-              if (window.confirm(`Delete ${selEntry[0]}?`)) deleteEntry(selEntry);
+              ask({ title: 'Delete this file?', body: <><span className="mono" style={{ color: 'var(--ink)' }}>{selEntry[0]}</span> will be removed from the device.</>, yes: 'Delete', danger: true }, () => deleteEntry(selEntry));
             }} />
           </>
         )}

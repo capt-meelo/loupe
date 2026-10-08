@@ -20,10 +20,17 @@ export const Chip = ({ on, sans, className = '', children, ...rest }) => (
   </button>
 );
 
+// 2400 -> 2.4k, 120000 -> 99k+, so a busy counter never widens the tab strip.
+const capBadge = (b) => {
+  const n = Number(b);
+  if (!Number.isFinite(n) || n < 1000) return b;
+  return n >= 100000 ? '99k+' : `${(n / 1000).toFixed(n < 10000 ? 1 : 0)}k`;
+};
+
 export const Tab = ({ on, label, badge, ...rest }) => (
   <button className={on ? 'tab on' : 'tab'} {...rest}>
     {label}
-    {badge !== '' && badge !== undefined ? <span className="tab-badge">{badge}</span> : null}
+    {badge !== '' && badge !== undefined ? <span className="tab-badge">{capBadge(badge)}</span> : null}
   </button>
 );
 
@@ -151,31 +158,34 @@ export function useDismiss(open, close) {
   return ref;
 }
 
-// Last dragged ratio per split, so a pane keeps its width across tab switches.
-// ponytail: in-memory only; persist to localStorage if reloads should remember it.
-const splitRatios = {};
+// Last dragged ratio per split, so a pane keeps its width across tab switches and reloads.
+const SPLIT_KEY = 'loupe.splits';
+const splitRatios = (() => { try { return JSON.parse(localStorage.getItem(SPLIT_KEY)) || {}; } catch { return {}; } })();
+const saveSplits = () => { try { localStorage.setItem(SPLIT_KEY, JSON.stringify(splitRatios)); } catch { /* private mode */ } };
 
-/** Two panes side by side with a draggable divider. Children: [left, right]. */
-export function Split({ id, initial = 0.5, min = 0.2, children }) {
+/** Two panes with a draggable divider. Children: [first, second]. dir="x" (default) side by side, "y" stacked. */
+export function Split({ id, initial = 0.5, min = 0.2, dir = 'x', children }) {
   const host = useRef(null);
   const [r, setR] = useState(splitRatios[id] ?? initial);
   const [dragging, setDragging] = useState(false);
+  const row = dir === 'y';
   const move = (e) => {
     if (!dragging) return;
     const b = host.current.getBoundingClientRect();
-    const v = Math.min(1 - min, Math.max(min, (e.clientX - b.left) / b.width));
+    const v = Math.min(1 - min, Math.max(min, row ? (e.clientY - b.top) / b.height : (e.clientX - b.left) / b.width));
     splitRatios[id] = v;
     setR(v);
   };
-  const stop = () => setDragging(false);
+  const stop = () => { setDragging(false); saveSplits(); };
+  const tracks = `minmax(0,${r}fr) 9px minmax(0,${1 - r}fr)`;
   return (
     <div ref={host} style={{
-      flex: '1 1 auto', minHeight: 0, display: 'grid', gridTemplateRows: 'minmax(0,1fr)',
-      gridTemplateColumns: `minmax(0,${r}fr) 9px minmax(0,${1 - r}fr)`
+      flex: '1 1 auto', minHeight: 0, minWidth: 0, display: 'grid',
+      ...(row ? { gridTemplateRows: tracks, gridTemplateColumns: 'minmax(0,1fr)' } : { gridTemplateRows: 'minmax(0,1fr)', gridTemplateColumns: tracks })
     }}>
       {children[0]}
       {/* pointer capture keeps the drag alive over iframes (HTML preview) and off-pane */}
-      <div className={'vsplitter' + (dragging ? ' dragging' : '')} title="Drag to resize"
+      <div className={(row ? 'splitter' : 'vsplitter') + (dragging ? ' dragging' : '')} title="Drag to resize"
         onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); setDragging(true); }}
         onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} />
       {children[1]}
