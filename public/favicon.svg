@@ -1,5 +1,4 @@
 <svg width="64" height="64" viewBox="336 100 460 460" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loupe">
-  <rect x="336" y="100" width="460" height="460" rx="96" fill="#050505"/>
   <g stroke="#b9f740" stroke-linecap="round">
     <circle cx="539" cy="300" r="143" stroke-width="38"/>
     <line x1="640" y1="404" x2="730" y2="498" stroke-width="44"/>
