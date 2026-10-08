@@ -9,6 +9,8 @@ wire protocol straight from the page, so a live screen mirror, a shell, a file m
 
 A second view, the Decompiler, turns an APK into readable Java, a decoded manifest and resources, and a searchable source tree, with a signature check. Open an APK from disk or pull an installed app straight from the phone, and read it without leaving Loupe.
 
+<video src="docs/demo/loupe-demo.mp4" controls width="100%"></video>
+
 ## Features
 
 ### Console
